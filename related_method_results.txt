@@ -1,0 +1,250 @@
+I. RELATED WORK
+
+A. Molecular Representation and Ligand Decomposition
+
+Molecular activity prediction commonly uses fingerprint- or graph-based representations. Extended-connectivity fingerprints (ECFPs) encode circular atomic neighborhoods as fixed-length bit vectors [1]. Their low cost and compatibility with established machine-learning algorithms make them strong QSAR baselines. The radius controls neighborhood extent, while vector length affects hash collisions; consequently, ECFPs capture local chemistry efficiently but their dimensions are not uniquely human-readable.
+
+Graph neural networks (GNNs) update atomic states through message passing and can learn structural relationships not explicitly enumerated by fixed fingerprints [2]. Their performance depends on the pretraining task, chemical domain, available labels, and fine-tuning strategy. Here, the graph branch uses a pretrained frozen encoder rather than end-to-end bioactivity training. The comparison therefore evaluates one transferred graph representation against ECFPs, not GNNs versus fingerprints in general.
+
+Whole-ligand representations do not directly provide chemically meaningful attribution units. A substructure pipeline instead decomposes each ligand into motifs, encodes them separately, and aggregates the resulting set. Interpretation therefore depends on both the predictor and the decomposition. This study combines BRICS fragments, which describe synthetically meaningful modules [3]; Bemis–Murcko scaffolds, which retain ring-and-linker cores [4]; and SMARTS-matched functional groups, which capture localized chemical functionality.
+
+The decomposition is not disjoint: functional groups, BRICS fragments, and scaffolds may share atoms. Exact atom-set duplicates are removed, whereas partially overlapping views are retained because they express different abstractions. Thus, importance belongs to a named ligand view rather than an exclusive atom partition, and overlap must be considered when projecting scores onto atoms.
+
+B. Activity Regression and Pooling Mechanisms
+
+Variable-size substructure sets require permutation-invariant aggregation. Sum pooling retains motif multiplicity, mean pooling reduces sensitivity to set size, and element-wise maximum pooling preserves the strongest activation per dimension. Concatenating these summaries captures complementary statistics but increases dimensionality and correlation.
+
+Regularized linear regressors can be fitted to pooled ECFPs: Ridge distributes weight among correlated variables, Lasso promotes sparse coefficients, and Elastic Net combines both effects. Such models provide both a predictive baseline and a direct route from coefficients to substructure contributions, testing whether learned aggregation is necessary.
+
+Attention pooling replaces fixed reduction with ligand-dependent normalized weights while preserving permutation invariance. Simple attention scores motifs independently; the Set Transformer first uses self-attention to contextualize each motif by the others and then pools the set with a learned query [5]. It can therefore represent motif combinations before ligand-level regression.
+
+Contextual attention introduces more parameters and stronger data requirements, which may be unfavorable for small datasets. The comparison therefore holds ECFP representation and decomposition fixed: the linear model uses statistical pooling, attention pooling learns one weight per motif, and the Set Transformer additionally models motif interactions.
+
+C. Substructure-Level Prediction Explanations
+
+Substructure explanations differ in the information used and the question answered. Model-specific methods derive importance from internal computations, whereas perturbation methods use output changes. This study compares linear contribution, attention score, and masking under a shared decomposition; disagreement is expected because they do not estimate one universal quantity.
+
+Linear attribution combines fitted coefficients with motif fingerprints and is faithful to the fitted function when feature scaling and pooling are handled correctly. Sum and mean permit additive decomposition, whereas maximum pooling requires assigning dimensions to motifs attaining the maximum. Interpretation nevertheless remains conditional on hashed features and overlapping views.
+
+Attention scores are convenient internal proxies produced during inference, but they are not necessarily causal explanations [6]. Raw coefficients describe the allocation of pooling weight rather than signed contribution to pIC50. Accordingly, the reported scores represent representation-level importance, not direct output sensitivity.
+
+Masking instead measures the signed prediction change after motif removal, approximating a local counterfactual for either a linear or neural predictor. Deletion may produce invalid or out-of-distribution molecules, and overlapping motifs mean one deletion can disrupt another view. Masking therefore provides complementary sensitivity evidence rather than causal ground truth.
+
+Predictive performance and explanatory plausibility are distinct dimensions. A model may highlight a familiar pharmacophore in a selected complex while ranking holdout activities poorly, and acceptable regression need not produce the most localized attribution. Test-set prediction and qualitative maps are therefore treated as complementary analyses without assuming that either validates the other.
+
+II. METHODOLOGY
+
+A. Problem Formulation and Data
+
+Let x denote a ligand SMILES and y its experimental pIC50. The objective is to learn
+
+ŷ = fθ(x),
+
+where ŷ is predicted activity. Since pIC50 is logarithmic, an error of one unit represents an order-of-magnitude difference in IC50. A separate model is trained for each target.
+
+Five predefined train/test datasets are considered: fatty acid amide hydrolase (FAAH), cannabinoid receptor 2 (CB2), poly(ADP-ribose) polymerase 1 (PARP1), penicillin-binding protein 2a (PBP2a), and ubiquitin-specific protease 7 (USP7). Each contains SMILES and pIC50 columns. Molecules without valid substructures are omitted; Table 1 gives sizes before filtering.
+
+Table 1. Datasets used in the study.
+
+Dataset  Train  Test  Total samples
+-------  -----  ----  -------------
+FAAH      1075   120           1195
+CB2       3511   391           3902
+PARP1     2208   246           2454
+PBP2a       80     9             89
+USP7       458    51            509
+
+Dataset size varies from 3,511 CB2 training ligands to only 80 PBP2a training and 9 test ligands. Neural estimation is harder on smaller datasets, and nine-sample metrics are highly unstable. An augmented FAAH set containing up to 50 randomized SMILES per molecule is excluded because no corresponding checkpoint or training log is available.
+
+B. Shared Ligand Decomposition
+
+Each SMILES is parsed into an RDKit molecular graph and decomposed into a variable-size set S(x) = {s_1, ..., s_m}. Three mechanisms are applied to the same ligand:
+
+1. Murcko scaffold: extract the core scaffold and map it back to the ligand atom indices.
+2. BRICS: identify bonds that can be cleaved according to BRICS rules, remove these bonds, and use the connected components as fragments.
+3. Functional groups: match 15 SMARTS patterns covering amides, carboxylic acids, esters, ketones, primary/secondary/tertiary amines, aromatic and aliphatic hydroxyl groups, nitro groups, sulfonamides, aryl halides, nitriles, ethers, and thioethers.
+
+The Murcko framework is mapped back to parent atom indices; BRICS-cleavable bonds are removed to obtain connected fragments; and unique SMARTS matches are retained. Together, these methods provide scaffold context, modular fragments, and localized chemical groups.
+
+Each s_i stores its source, name, atom set A_i, and canonical induced-subgraph SMILES. Exact atom-set duplicates are removed, while partial overlaps remain to preserve complementary views.
+
+Molecules without valid substructures are omitted. The GNN branch requires three-dimensional coordinates; missing conformers are embedded with a fixed seed and MMFF-optimized, with random-coordinate embedding as fallback. The complete conformer is encoded before motif pooling.
+
+The implementation also supports a legacy decomposition based on atom paths of lengths 2 to 6. However, all batch scripts associated with the reported experiments explicitly use the BRICS–Murcko–functional-group combination. The path-based option is therefore outside the empirical comparison presented in the Results and Discussion section.
+
+C. Substructure Representation
+
+For fingerprint-based methods M1, M2, and M4, the canonical SMILES of each induced subgraph is converted to an ECFP:
+
+e_i^FP = ECFP(s_i; r, d),
+
+where r is radius and d is fingerprint dimension. M2 and M4 use r = 2 and d = 2048; M1 evaluates radii {2, 3} and dimensions {2048, 4096}. Independent motif encoding preserves explicit attribution units but excludes environments crossing motif boundaries.
+
+For M3, the complete ligand is processed by a three-dimensional GNN pretrained on QM9 internal energy. The 200-dimensional encoder uses atom embeddings and distance-dependent message passing through six hidden and six output layers. Its parameters remain frozen; only the attention regressor is trained.
+
+Let h_v denote the contextual embedding returned for atom v. The embedding of substructure s_i is the mean over its parent atom indices:
+
+e_i = (1 / |A_i|) Σ_(v ∈ A_i) h_v,
+
+Unlike independent ECFPs, this representation contextualizes motif atoms within the complete conformer. Freezing the encoder, however, prevents adaptation to target-specific bioactivity.
+
+Variable-length motif sets are padded for batching, and a Boolean mask excludes padded rows from attention and pooling.
+
+D. pIC50 Prediction Models
+
+1) M1: Linear Baseline
+
+Given m fingerprint vectors, fixed statistics are computed element-wise. The most expressive candidate concatenates sum, mean, and maximum pooling:
+
+z = [Σ_i e_i; (1/m) Σ_i e_i; max_i e_i].
+
+The grid also considers sum–mean pooling. The pooled vector is standardized within the pipeline and supplied to Ridge, Lasso, or Elastic Net.
+
+The search covers 3 regressors, 2 pooling schemes, 2 radii, and 2 fingerprint sizes (24 configurations). Ridge evaluates α from 10^0 to 10^5; Lasso and Elastic Net evaluate α from 10^-2 to 10^1, with Elastic Net l1 ratios {0.1, 0.3, 0.5, 0.7, 0.9}. Selection uses shuffled five-fold cross-validation (seed 42) and mean validation R².
+
+2) M2: ECFP + Attention Pooling
+
+M2 replaces the fixed reduction with learned attention pooling. Each ECFP is projected from the 2048-dimensional input into a 128-dimensional hidden space:
+
+h_i = tanh(W_h e_i + b_h),
+
+α_i = exp(w_aᵀ h_i) / Σ_(j=1)^m exp(w_aᵀ h_j),
+
+z = Σ_(i=1)^m α_i h_i.
+
+The mask excludes padding from softmax. The coefficients satisfy α_i ≥ 0 and Σ_i α_i = 1, producing a weighted motif average. A linear–ReLU–dropout regression head maps z to normalized pIC50 while preserving permutation invariance.
+
+3) M3: GNN + Substructure Attention
+
+M3 uses the M2 attention regressor but replaces ECFPs with 200-dimensional frozen-GNN motif embeddings. Holding the head comparable tests transferred, full-ligand graph features against fixed local fingerprints without end-to-end encoder adaptation.
+
+4) M4: Set Transformer
+
+M4 projects 2048-dimensional ECFPs to 128 dimensions and applies two Transformer encoder layers with four heads, 512-dimensional feed-forward blocks, GELU, and dropout:
+
+H' = TransformerEncoder(H, M),
+
+where H is the projected motif matrix and M the padding mask. A learned query pools H' through multi-head attention, and a GELU MLP predicts normalized pIC50. Returned pooling weights are head-averaged, yielding one coefficient per motif.
+
+5) M5: Masking Attribution
+
+M5 is a parameter-free wrapper around a trained linear or attention predictor. For each s_i, atoms in A_i are removed, and the remaining graph is sanitized and re-predicted. Invalid or empty molecules yield no counterfactual. Repeating this per motif measures predictor-specific output sensitivity.
+
+E. Training, Postprocessing, and Evaluation
+
+M1 standardizes pooled inputs but keeps targets on the original pIC50 scale. M2–M4 normalize motif features dimension-wise using training motifs and normalize labels using training statistics:
+
+y_norm = (y - μ_(y,train)) / σ_(y,train).
+
+The neural regressors minimize mean squared error over y_norm using Adam. At inference, outputs are transformed back to the experimental scale:
+
+ŷ = ŷ_norm σ_(y,train) + μ_(y,train).
+
+M2 and M4 use 1000 epochs, batch size 128, learning rate 10^-4, hidden dimension 128, and dropout 0.1. M3 uses 200 epochs, batch size 32, and learning rate 10^-3 with the same hidden dimension and dropout. NumPy and PyTorch use seed 42; the GNN remains in evaluation mode.
+
+The primary selection and reporting metric in the original training pipeline is the coefficient of determination:
+
+R² = 1 - [Σ_n (y_n - ŷ_n)²] / [Σ_n (y_n - ȳ)²].
+
+R² = 0 corresponds to mean prediction, while negative values are worse. It is invariant to consistent affine transformation of labels and predictions. Checkpoint re-evaluation also computes MAE and RMSE on the original pIC50 scale:
+
+MAE = (1/N) Σ_n |y_n - ŷ_n|,
+
+RMSE = sqrt[(1/N) Σ_n (y_n - ŷ_n)²].
+
+MAE measures typical absolute error, whereas RMSE penalizes large errors more strongly. M1 is selected by training-set cross-validation, but M2–M4 retain the epoch with the highest test R². Their results may therefore be optimistic because the test set participates in model selection; a strict protocol would use a separate validation split.
+
+F. Post-Training Importance Estimation
+
+1) M1: Linear Contribution
+
+Let w denote the coefficient vector learned after feature standardization, and let σ denote the feature-wise scale estimated by StandardScaler. The effective coefficient acting on an unstandardized pooled feature is
+
+w_eff = w / σ.
+
+The scaler mean contributes to the global intercept and is not assigned to individual motifs. A substructure contribution is calculated separately for each pooling block and the block-wise values are summed. For sum pooling,
+
+I_i^sum = w_effᵀ e_i.
+
+For mean pooling,
+
+I_i^mean = (1/m) w_effᵀ e_i.
+
+For maximum pooling, each fingerprint dimension contributes only through the motif or motifs attaining the ligand-level maximum. If several motifs tie, the implementation divides that dimension's effective weight equally among them. The reported linear importance is the sum of all applicable pooling-block terms. This calculation is more detailed than the simplified expression I_i = wᵀe_i because it accounts for feature scaling, concatenated pooling, set size, and ties.
+
+2) M2 and M3: Attention Score
+
+The current inference path assigns each motif its normalized pooling coefficient:
+
+I_i = α_i.
+
+These scores are nonnegative and sum to one within each ligand. They consequently express relative allocation of attention rather than signed changes in predicted activity. Although the repository includes a helper that computes α_i ||e_i||₂, and the README describes this alternative for M2, that helper is not invoked in the reported inference pipeline. The results must therefore be interpreted strictly as raw attention weights rather than attention multiplied by embedding magnitude.
+
+3) M4: Pooling Attention
+
+For the Set Transformer, importance is the attention assigned by the learned pooling query to each contextualized substructure:
+
+I_i = AvgHead(a_hi).
+
+The implementation returns coefficients already averaged across the four heads by MultiheadAttention and does not retain separate head-specific attributions. As with M2 and M3, the value describes representation pooling and should not be interpreted automatically as a causal effect on the output.
+
+4) M5: Masking
+
+For a trained predictor f, signed masking importance is defined as
+
+I_i = f(x) - f(x \ s_i)
+    = predicted pIC50_full - predicted pIC50_(-i).
+
+I_i > 0 indicates that deleting s_i decreases predicted pIC50, so the motif supports the original activity estimate. I_i < 0 indicates that deletion increases predicted pIC50, suggesting a negative contribution under the fitted predictor. The magnitude measures local sensitivity to the specific deletion operation, not a guaranteed causal effect, because the masked molecule may differ substantially from the training distribution.
+
+For atom-level visualization, each substructure score is divided equally among its constituent atoms. Contributions are then summed over all views containing a given atom:
+
+I_atom(v) = Σ_(i:v∈A_i) I_i / |A_i|.
+
+This projection preserves the total score contributed by each motif while allowing overlapping BRICS, scaffold, and functional-group views to accumulate on shared atoms. The resulting atom map is rendered on a two-dimensional RDKit depiction. It is intended to facilitate qualitative comparison with known binding motifs rather than to establish ground-truth atomic causality.
+
+III. RESULTS AND DISCUSSION
+
+A. pIC50 Prediction Performance
+
+Table 2 summarizes the best test R² values recorded in grid_results.csv and the training.log files. For M1, the reported value corresponds to the configuration selected by cross-validation; for M2–M4, it corresponds to the checkpoint with the best test R².
+
+Table 2. Test R² of the models on five datasets. Asterisks indicate the highest score for each dataset.
+
+Dataset  M1: Linear  M2: FP-Attn  M3: GNN-Attn  M4: Set Transformer
+-------  ----------  -----------  ------------  -------------------
+FAAH          0.414        0.453         0.097               0.461*
+CB2           0.469       0.535*         0.056                0.533
+PARP1        ≈0.000        0.002        0.005*               -0.009
+PBP2a         0.669       0.850*         0.666                0.408
+USP7         0.536*        0.474         0.249                0.225
+
+No single architecture dominates across all datasets. FP-attention performs best on CB2 and PBP2a and is close to the best result on FAAH. The Set Transformer only marginally outperforms FP-attention on FAAH (0.461 versus 0.453), while performing substantially worse on USP7 and PBP2a. The linear baseline remains the best model on USP7, indicating that greater model complexity does not necessarily improve performance when data are limited.
+
+GNN-attention performs markedly worse than ECFP-attention on FAAH and CB2. One plausible explanation is that the GNN was pretrained for QM9 property regression and subsequently frozen, preventing its embeddings from adapting directly to pIC50 or to the chemical domain of each target. These results are insufficient to conclude that GNNs are generally inferior to fingerprints; they demonstrate only that the current pretrained and frozen configuration is ineffective.
+
+All models achieve values near R² = 0 on PARP1, indicating no substantial improvement over mean prediction on the current split. In contrast, FP-attention achieves 0.850 on PBP2a. However, the PBP2a test set contains only 9 samples, so R² has high variance and is highly sensitive to individual observations. Furthermore, the M1 grid contains a configuration that achieves a test R² = 0.848, but this is not the configuration selected by CV; reporting that value as the primary result would introduce test-based model-selection bias.
+
+B. Qualitative Attribution Results
+
+The target-validation pipeline applies the models to ligands with PDB structures and outputs the predicted pIC50 together with the substructures having the largest |I_i|. For example, on FAAH, the linear baseline predicts 8.22 for ligand 2WAP and 8.84 for 3PPM, whereas the attention predictor used for masking predicts 8.43 and 8.95, respectively. Under masking, one BRICS fragment of 2WAP has ΔpIC50 = 1.31, and one BRICS fragment of 3PPM has ΔpIC50 = 1.68.
+
+Substructure rankings derived from linear contributions, attention, and masking do not coincide completely. This is expected because the three methods answer different questions: contribution within the fitted linear function, the weight used when pooling embeddings, and the change in output following perturbation. The repository currently provides neither ground-truth attributions nor a quantitative measure of agreement among the explanation methods; the heatmaps should therefore be regarded only as qualitative analyses.
+
+C. Experimental Limitations
+
+The preceding results should be interpreted in light of four limitations. First, model checkpoints are absent from the current repository snapshot, although the logs and result CSV files remain; inference cannot yet be reproduced solely from the stored artifacts. Second, M2–M4 use the test set to select the best epoch, compromising the independence of the evaluation. Third, FAAH augmentation has been prepared, but no training results are available. Finally, the repository does not report MAE, RMSE, confidence intervals across multiple seeds, or external validation against observed pIC50 values. Future experiments should separate the validation set from the test set, run multiple seeds, preserve molecule-level splits when using randomized-SMILES augmentation, and evaluate attribution using both masking consistency and independent medicinal-chemistry knowledge.
+
+REFERENCES
+
+[1] Rogers, David, and Mathew Hahn. "Extended-Connectivity Fingerprints." Journal of Chemical Information and Modeling 50, no. 5 (2010): 742–754. https://doi.org/10.1021/ci100050t.
+
+[2] Gilmer, Justin, Samuel S. Schoenholz, Patrick F. Riley, Oriol Vinyals, and George E. Dahl. "Neural Message Passing for Quantum Chemistry." In Proceedings of the 34th International Conference on Machine Learning, Proceedings of Machine Learning Research 70 (2017): 1263–1272. PMLR.
+
+[3] Degen, Jörg, Christof Wegscheid-Gerlach, Andrea Zaliani, and Matthias Rarey. "On the Art of Compiling and Using 'Drug-Like' Chemical Fragment Spaces." Journal of Chemical Information and Modeling 48, no. 8 (2008): 1598–1605. https://doi.org/10.1021/ci800181y.
+
+[4] Bemis, Guy W., and Mark A. Murcko. "The Properties of Known Drugs. 1. Molecular Frameworks." Journal of Medicinal Chemistry 39, no. 15 (1996): 2887–2893. https://doi.org/10.1021/jm9602928.
+
+[5] Lee, Juho, Yoonho Lee, Jungtaek Kim, Adam R. Kosiorek, Seungjin Choi, and Yee Whye Teh. "Set Transformer: A Framework for Attention-Based Permutation-Invariant Neural Networks." In Proceedings of the 36th International Conference on Machine Learning, Proceedings of Machine Learning Research 97 (2019): 3744–3753. PMLR.
+
+[6] Jain, Sarthak, and Byron C. Wallace. "Attention Is Not Explanation." In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (2019): 3543–3556. Association for Computational Linguistics. https://doi.org/10.18653/v1/N19-1357.

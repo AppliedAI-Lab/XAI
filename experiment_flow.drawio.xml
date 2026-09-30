@@ -1,0 +1,208 @@
+<mxfile host="app.diagrams.net" modified="2026-08-02T03:39:00.000Z" agent="Cursor" version="24.7.17">
+  <diagram id="xai-experiment-flow" name="Experiment Flow">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="pIC50 Prediction and Substructure-Importance Experiment Flow" style="text;html=1;align=center;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="780" y="20" width="1420" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="shared-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF2F8;strokeColor=#5B9BD5;dashed=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="20" y="80" width="1200" height="300" as="geometry"/>
+        </mxCell>
+        <mxCell id="shared-label" value="SHARED DATA PREPARATION" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#2F5597;" vertex="1" parent="1">
+          <mxGeometry x="40" y="88" width="300" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="branch-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7E6;strokeColor=#F5A623;dashed=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="80" width="920" height="570" as="geometry"/>
+        </mxCell>
+        <mxCell id="branch-label" value="METHOD-SPECIFIC REPRESENTATION AND MODELING" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#A65E00;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="88" width="450" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="common-output-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E9F7EF;strokeColor=#55A868;dashed=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="2180" y="80" width="780" height="570" as="geometry"/>
+        </mxCell>
+        <mxCell id="common-output-label" value="SHARED PREDICTION, EVALUATION, AND MODEL SELECTION" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#287A3C;" vertex="1" parent="1">
+          <mxGeometry x="2200" y="88" width="520" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="explain-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4ECF7;strokeColor=#9B59B6;dashed=1;arcSize=8;" vertex="1" parent="1">
+          <mxGeometry x="700" y="690" width="2260" height="460" as="geometry"/>
+        </mxCell>
+        <mxCell id="explain-label" value="POST-TRAINING SUBSTRUCTURE IMPORTANCE" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontStyle=1;fontColor=#6C3483;" vertex="1" parent="1">
+          <mxGeometry x="720" y="698" width="420" height="30" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="datasets" value="Ligand datasets&lt;br&gt;&lt;b&gt;FAAH, CB2, PARP1,&lt;br&gt;PBP2a, USP7&lt;/b&gt;&lt;br&gt;SMILES + pIC50" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5B9BD5;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="50" y="165" width="210" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="split" value="Predefined train/test split&lt;br&gt;&lt;br&gt;Train: fitting and CV&lt;br&gt;Test: reported R²" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5B9BD5;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="320" y="165" width="220" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="rdkit" value="SMILES → RDKit molecule&lt;br&gt;&lt;br&gt;Canonicalization / sanitization&lt;br&gt;Optional 3D conformer" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#5B9BD5;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="600" y="165" width="240" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="decompose" value="&lt;b&gt;Shared ligand decomposition&lt;/b&gt;&lt;br&gt;&lt;br&gt;BRICS fragments&lt;br&gt;Murcko scaffold&lt;br&gt;15 SMARTS functional groups&lt;br&gt;&lt;br&gt;Deduplicate identical atom sets" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D9EAF7;strokeColor=#2F75B5;strokeWidth=3;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="900" y="135" width="280" height="170" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="fp-encode" value="&lt;b&gt;Fingerprint representation&lt;/b&gt;&lt;br&gt;ECFP per substructure&lt;br&gt;radius: 2 or 3&lt;br&gt;bits: 2048 or 4096" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="150" width="220" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="graph-encode" value="&lt;b&gt;Graph representation&lt;/b&gt;&lt;br&gt;Full molecular graph&lt;br&gt;Atom and bond features" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="455" width="220" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="m1" value="&lt;b&gt;M1: Linear baseline&lt;/b&gt;&lt;br&gt;sum / mean / max pooling&lt;br&gt;StandardScaler&lt;br&gt;Ridge / Lasso / Elastic Net" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#C9A227;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1570" y="120" width="250" height="105" as="geometry"/>
+        </mxCell>
+        <mxCell id="m2" value="&lt;b&gt;M2: FP attention&lt;/b&gt;&lt;br&gt;Hidden projection&lt;br&gt;Attention pooling αᵢ&lt;br&gt;Ligand embedding" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#C9A227;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1570" y="260" width="250" height="105" as="geometry"/>
+        </mxCell>
+        <mxCell id="m4" value="&lt;b&gt;M4: Set Transformer&lt;/b&gt;&lt;br&gt;2 Transformer encoder layers&lt;br&gt;Learned-query multi-head pooling&lt;br&gt;Ligand embedding" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#C9A227;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1570" y="400" width="250" height="115" as="geometry"/>
+        </mxCell>
+        <mxCell id="pretrained-gnn" value="QM9-pretrained GNN&lt;br&gt;&lt;b&gt;Frozen during pIC50 training&lt;/b&gt;&lt;br&gt;Atom embeddings hᵥ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1570" y="540" width="250" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="m3" value="&lt;b&gt;M3: GNN substructure attention&lt;/b&gt;&lt;br&gt;Mean-pool atoms within sᵢ&lt;br&gt;Substructure attention αᵢ&lt;br&gt;Ligand embedding" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9E6;strokeColor=#C9A227;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1870" y="525" width="250" height="105" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="regression" value="&lt;b&gt;Regression to pIC50&lt;/b&gt;&lt;br&gt;&lt;br&gt;M1: regularized linear regressor&lt;br&gt;M2--M4: MLP regression head&lt;br&gt;MSE optimization" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#27AE60;strokeWidth=3;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="2215" y="230" width="260" height="135" as="geometry"/>
+        </mxCell>
+        <mxCell id="prediction" value="Predicted pIC50&lt;br&gt;&lt;br&gt;DL outputs are transformed back&lt;br&gt;from standardized target scale" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5F5E3;strokeColor=#27AE60;strokeWidth=3;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="2530" y="230" width="230" height="135" as="geometry"/>
+        </mxCell>
+        <mxCell id="evaluation" value="&lt;b&gt;Evaluation and selection&lt;/b&gt;&lt;br&gt;&lt;br&gt;M1: 5-fold CV on train&lt;br&gt;M2--M4: best test R² checkpoint&lt;br&gt;Target-ligand validation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F8F0;strokeColor=#55A868;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="2505" y="435" width="280" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="results" value="Experiment artifacts&lt;br&gt;&lt;br&gt;training.log&lt;br&gt;grid_results.csv&lt;br&gt;predictions.csv" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#E8F8F0;strokeColor=#55A868;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="2820" y="435" width="120" height="125" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="importance-hub" value="Choose post-training&lt;br&gt;importance method" style="rhombus;whiteSpace=wrap;html=1;fillColor=#EADCF8;strokeColor=#8E44AD;strokeWidth=3;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1725" y="735" width="180" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="linear-importance" value="&lt;b&gt;M1: Linear contribution&lt;/b&gt;&lt;br&gt;Undo StandardScaler coefficient scale&lt;br&gt;Accumulate sum / mean / max blocks&lt;br&gt;Iᵢ from effective coefficients" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4ECF7;strokeColor=#9B59B6;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="760" y="900" width="285" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="attn-importance" value="&lt;b&gt;M2 and M3: Attention&lt;/b&gt;&lt;br&gt;Iᵢ = αᵢ&lt;br&gt;&lt;br&gt;Inference uses attention weight only,&lt;br&gt;not αᵢ × ||eᵢ||" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4ECF7;strokeColor=#9B59B6;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="900" width="285" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="set-importance" value="&lt;b&gt;M4: Pooling attention&lt;/b&gt;&lt;br&gt;Iᵢ = average-head attention&lt;br&gt;from learned query to sᵢ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4ECF7;strokeColor=#9B59B6;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1440" y="900" width="285" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="masking" value="&lt;b&gt;M5: Model-agnostic masking&lt;/b&gt;&lt;br&gt;Use a trained linear or attention predictor&lt;br&gt;Remove sᵢ and predict again&lt;br&gt;Iᵢ = pIC50(full) − pIC50(without sᵢ)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4ECF7;strokeColor=#9B59B6;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="1780" y="900" width="320" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="atom-map" value="&lt;b&gt;Shared atom-level projection&lt;/b&gt;&lt;br&gt;Distribute substructure importance over atoms&lt;br&gt;Sum contributions from overlapping substructures" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EADCF8;strokeColor=#8E44AD;strokeWidth=3;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="2160" y="900" width="340" height="125" as="geometry"/>
+        </mxCell>
+        <mxCell id="outputs" value="Interpretability outputs&lt;br&gt;&lt;br&gt;Ranked substructures&lt;br&gt;Signed importance scores&lt;br&gt;Ligand atom heatmap" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#F4ECF7;strokeColor=#8E44AD;strokeWidth=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="2570" y="895" width="260" height="135" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e-data-split" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#5B9BD5;" edge="1" parent="1" source="datasets" target="split">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-split-rdkit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#5B9BD5;" edge="1" parent="1" source="split" target="rdkit">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-rdkit-decomp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#5B9BD5;" edge="1" parent="1" source="rdkit" target="decompose">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e-decomp-fp" value="M1, M2, M4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D79B00;fontSize=12;" edge="1" parent="1" source="decompose" target="fp-encode">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-decomp-graph" value="M3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#D79B00;fontSize=12;" edge="1" parent="1" source="decompose" target="graph-encode">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-fp-m1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#C9A227;strokeWidth=2;" edge="1" parent="1" source="fp-encode" target="m1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-fp-m2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#C9A227;strokeWidth=2;" edge="1" parent="1" source="fp-encode" target="m2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-fp-m4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#C9A227;strokeWidth=2;" edge="1" parent="1" source="fp-encode" target="m4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-graph-gnn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#D79B00;strokeWidth=2;" edge="1" parent="1" source="graph-encode" target="pretrained-gnn">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-gnn-m3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#D79B00;strokeWidth=2;" edge="1" parent="1" source="pretrained-gnn" target="m3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e-m1-reg" value="linear features" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#27AE60;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="m1" target="regression">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-m2-reg" value="ligand embedding" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#27AE60;strokeWidth=2;fontSize=11;" edge="1" parent="1" source="m2" target="regression">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-m4-reg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#27AE60;strokeWidth=2;" edge="1" parent="1" source="m4" target="regression">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-m3-reg" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#27AE60;strokeWidth=2;" edge="1" parent="1" source="m3" target="regression">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-reg-pred" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#27AE60;strokeWidth=3;" edge="1" parent="1" source="regression" target="prediction">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-pred-eval" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#55A868;strokeWidth=2;" edge="1" parent="1" source="prediction" target="evaluation">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-eval-results" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#55A868;strokeWidth=2;" edge="1" parent="1" source="evaluation" target="results">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e-pred-hub" value="trained model" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#8E44AD;strokeWidth=2;fontSize=12;" edge="1" parent="1" source="prediction" target="importance-hub">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-hub-linear" value="M1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9B59B6;strokeWidth=2;" edge="1" parent="1" source="importance-hub" target="linear-importance">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-hub-attn" value="M2 / M3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9B59B6;strokeWidth=2;" edge="1" parent="1" source="importance-hub" target="attn-importance">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-hub-set" value="M4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9B59B6;strokeWidth=2;" edge="1" parent="1" source="importance-hub" target="set-importance">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-hub-mask" value="M5 / any trained predictor" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9B59B6;strokeWidth=2;" edge="1" parent="1" source="importance-hub" target="masking">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-decomp-mask" value="substructure atom sets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9B59B6;strokeWidth=2;dashed=1;fontSize=11;" edge="1" parent="1" source="decompose" target="masking">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1035" y="665"/>
+              <mxPoint x="1940" y="665"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e-linear-map" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#8E44AD;strokeWidth=2;" edge="1" parent="1" source="linear-importance" target="atom-map">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-attn-map" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#8E44AD;strokeWidth=2;" edge="1" parent="1" source="attn-importance" target="atom-map">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-set-map" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#8E44AD;strokeWidth=2;" edge="1" parent="1" source="set-importance" target="atom-map">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-mask-map" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#8E44AD;strokeWidth=2;" edge="1" parent="1" source="masking" target="atom-map">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-map-output" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#8E44AD;strokeWidth=3;" edge="1" parent="1" source="atom-map" target="outputs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

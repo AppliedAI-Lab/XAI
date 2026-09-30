@@ -1,0 +1,343 @@
+\section{Related Work}
+\label{sec:related_work}
+
+\subsection{Molecular Representation and Ligand Decomposition}
+
+Molecular activity prediction models commonly employ two principal classes of
+representations: fingerprint-based and graph-based representations. Morgan
+fingerprints, commonly implemented as extended-connectivity fingerprints
+(ECFPs), encode atomic neighborhoods as fixed-length bit vectors
+\cite{rogers2010extended}. This representation is computationally inexpensive,
+integrates well with classical machine-learning models, and remains a strong
+baseline for many QSAR tasks. In contrast, graph neural networks (GNNs) learn
+atomic and bond representations directly through message passing, thereby
+reducing reliance on manually engineered features \cite{gilmer2017neural}.
+
+In addition to whole-molecule representations, decomposing a ligand into
+substructures helps relate model predictions to more readily interpretable
+chemical motifs. BRICS cleaves molecules at bonds that can be synthetically
+recombined according to chemical rules \cite{degen2008art}, whereas the
+Bemis--Murcko scaffold retains ring frameworks and the linkers between rings
+\cite{bemis1996properties}. Functional groups can be detected using SMARTS
+queries. These three sources of substructures are complementary: BRICS describes
+synthetically meaningful fragments, Murcko describes the core scaffold, and
+SMARTS describes functional groups likely to govern chemical interactions.
+Because substructures may overlap in their atom sets, they are treated as a set
+of ligand ``views'' rather than as a single disjoint partition.
+
+\subsection{Activity Regression and Pooling Mechanisms}
+
+In classical QSAR, Ridge, Lasso, and Elastic Net are commonly applied to
+fingerprints or descriptors. Regularization controls the high dimensionality and
+collinearity of ECFPs, while linear coefficients provide a direct form of
+interpretation. However, a linear model requires an operation that pools
+substructure vectors into a ligand vector, such as the sum, mean, or maximum.
+
+Attention models replace fixed pooling with learned weights. In attention
+pooling, each substructure receives a weight, and the ligand representation is
+the weighted sum of the embeddings. The Set Transformer extends this idea by
+applying self-attention among the elements of an unordered set
+\cite{lee2019set}. For molecular data, this approach enables interactions among
+substructures to be modeled before constructing the whole-ligand representation.
+
+\subsection{Substructure-Level Prediction Explanations}
+
+Three families of explanation methods are investigated in the repository.
+First, linear models decompose predictions according to regression coefficients
+and feature vectors. Second, attention scores are used as proxies for
+importance. Although convenient, this interpretation warrants caution because
+attention does not necessarily correspond to causality or output sensitivity
+\cite{jain2019attention}. Third, perturbation/masking directly measures the
+change in prediction when each substructure is removed. Masking approximates the
+counterfactual question, ``How would the prediction change if this motif were
+absent?'', but the result may be affected by the molecule produced after atom
+deletion, overlapping substructures, and samples outside the training domain.
+
+
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{Problem Formulation and Data}
+
+Given a ligand with SMILES \(x\), the objective is to learn the function
+\(f_{\theta}(x)=\widehat{y}\), where \(y=\mathrm{pIC}_{50}\). The repository
+uses the FAAH, CB2, PARP1, PBP2a, and USP7 datasets with predefined train/test
+splits. Their sizes are summarized in Table~\ref{tab:datasets}. An augmented
+version of FAAH was also created by generating 50 randomized SMILES for each
+molecule, but no corresponding experimental log is available; this version is
+therefore excluded from the quantitative comparison.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Datasets used in the study.}
+    \label{tab:datasets}
+    \begin{tabular}{lrrr}
+        \hline
+        Dataset & Train & Test & Total samples \\
+        \hline
+        FAAH   & 1075 & 120 & 1195 \\
+        CB2    & 3511 & 391 & 3902 \\
+        PARP1  & 2208 & 246 & 2454 \\
+        PBP2a  & 80   & 9   & 89 \\
+        USP7   & 458  & 51  & 509 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsection{Shared Ligand Decomposition}
+
+Each SMILES is converted into an RDKit molecule and decomposed using three
+mechanisms:
+\begin{enumerate}
+    \item \textbf{Murcko scaffold}: extract the core scaffold and map it back to
+    the ligand atom indices;
+    \item \textbf{BRICS}: identify bonds that can be cleaved according to BRICS
+    rules, remove these bonds, and use the connected components as fragments;
+    \item \textbf{Functional groups}: match 15 SMARTS patterns, including
+    amides, esters, amines, and other common functional groups.
+\end{enumerate}
+Each substructure \(s_i\) is stored by its type, name, atom-index set, and the
+canonical SMILES of its induced subgraph. Substructures with identical atom sets
+are deduplicated, although substructures with different atom sets may still
+overlap. If three-dimensional coordinates are required for the GNN, a conformer
+is generated and optimized using MMFF when the input lacks one.
+
+The repository also supports a legacy variant based on atom paths of lengths 2
+to 6. However, the default experimental scripts all use the
+BRICS--Murcko--functional-group combination; consequently, the results in
+Section~\ref{sec:results} do not reflect the path-fragment variant.
+
+\subsection{Substructure Representation}
+
+For fingerprint-based methods, each \(s_i\) is encoded as an ECFP
+\(\mathbf{e}_i\). The default configuration uses radius 2 and 2048 bits; the
+baseline grid search examines radii \(\{2,3\}\) and bit counts
+\(\{2048,4096\}\).
+
+For the graph-based method, the entire ligand is passed through a GNN pretrained
+on QM9. The GNN is frozen during the pIC50 experiments. The substructure
+embedding is the mean of the embeddings of the atoms belonging to that
+substructure:
+\begin{equation}
+    \mathbf{e}_i =
+    \frac{1}{|A_i|}\sum_{v\in A_i}\mathbf{h}_v,
+\end{equation}
+where \(A_i\) is the atom set of \(s_i\), and \(\mathbf{h}_v\) is the atomic
+embedding produced by the GNN. Batches containing different numbers of
+substructures are padded and accompanied by a Boolean mask that excludes the
+padding.
+
+\subsection{pIC50 Prediction Models}
+
+\paragraph{M1: Linear baseline.}
+Substructure ECFPs are pooled using the sum, mean, and/or maximum. The full
+configuration produces the vector
+\begin{equation}
+    \mathbf{z} =
+    \left[
+    \sum_i\mathbf{e}_i;\
+    \frac{1}{m}\sum_i\mathbf{e}_i;\
+    \max_i\mathbf{e}_i
+    \right].
+\end{equation}
+After StandardScaler transformation, \(\mathbf{z}\) is passed to Ridge, Lasso,
+or Elastic Net. The grid search comprises \(3\) regressors, \(2\) pooling
+schemes, \(2\) radii, and \(2\) fingerprint sizes. The configuration is selected
+using the mean \(R^2\) from 5-fold cross-validation on the training set.
+
+\paragraph{M2: ECFP + attention pooling.}
+Each ECFP is projected through a hidden layer:
+\begin{align}
+    \mathbf{h}_i &= \tanh(\mathbf{W}_h\mathbf{e}_i+\mathbf{b}_h),\\
+    \alpha_i &=
+    \frac{\exp(\mathbf{w}_a^\top\mathbf{h}_i)}
+    {\sum_{j=1}^{m}\exp(\mathbf{w}_a^\top\mathbf{h}_j)},\\
+    \mathbf{z} &= \sum_{i=1}^{m}\alpha_i\mathbf{h}_i.
+\end{align}
+A regression MLP maps \(\mathbf{z}\) to pIC50.
+
+\paragraph{M3: GNN + substructure attention.}
+M3 uses the same attention head as M2 but replaces ECFPs with substructure
+embeddings obtained by mean-pooling the outputs of a pretrained, frozen atomic
+GNN. This design tests whether graph-learned representations outperform fixed
+fingerprints when the substructure pooling mechanism is held comparable.
+
+\paragraph{M4: Set Transformer.}
+The set of ECFP embeddings is processed by two Transformer encoder layers. A
+learned query applies multi-head attention to the contextualized representations
+to construct a ligand vector, after which an MLP predicts pIC50. The attention
+weights returned by the pooling layer are averaged across heads by the
+MultiheadAttention implementation.
+
+\paragraph{M5: Masking attribution.}
+M5 is not an independent prediction model and has no trainable parameters. This
+method wraps a trained predictor, sequentially deletes the atoms of each
+substructure, sanitizes the remaining molecule, and predicts pIC50 again.
+
+\subsection{Training, Postprocessing, and Evaluation}
+
+M1 standardizes features using StandardScaler within the pipeline. For M2--M4,
+the means and standard deviations of the features and pIC50 are estimated from
+the training set only. The models are optimized using MSE on the standardized
+target; predictions are then transformed back to the pIC50 scale:
+\begin{equation}
+    \widehat{y} =
+    \widehat{y}_{\mathrm{norm}}\sigma_{y,\mathrm{train}}
+    +\mu_{y,\mathrm{train}}.
+\end{equation}
+M2 and M4 use 1000 epochs, a batch size of 128, and a learning rate of
+\(10^{-4}\); M3 uses 200 epochs, a batch size of 32, and a learning rate of
+\(10^{-3}\). The default seed is 42.
+
+The primary metric is
+\begin{equation}
+    R^2=1-\frac{\sum_n(y_n-\widehat{y}_n)^2}
+    {\sum_n(y_n-\bar{y})^2}.
+\end{equation}
+Computing \(R^2\) on the standardized target or on the original scale yields the
+same value when both the target and predictions undergo a consistent affine
+transformation. However, M2--M4 save the checkpoint with the best \(R^2\)
+directly on the test set, whereas M1 selects its configuration by
+cross-validation on the training set. The DL results may therefore be
+optimistically biased because the test set participates in checkpoint selection
+and does not constitute a fully independent evaluation.
+
+\subsection{Post-Training Importance Estimation}
+
+\paragraph{M1: Linear contribution.}
+Because the model is fitted after StandardScaler transformation, the effective
+coefficient for the original features is
+\(\mathbf{w}_{\mathrm{eff}}=\mathbf{w}/\boldsymbol{\sigma}\). The contribution
+of each substructure is computed separately for each pooling block and then
+summed. For sum pooling,
+\begin{equation}
+    I_i^{\mathrm{sum}} =
+    \mathbf{w}_{\mathrm{eff}}^\top\mathbf{e}_i.
+\end{equation}
+Mean pooling introduces an additional factor of \(1/m\). For max pooling, the
+contribution in each dimension is assigned to the substructure attaining the
+maximum according to the code's tie-handling rule. This implemented calculation
+is more detailed than the simplified formula
+\(I_i=\mathbf{w}^\top\mathbf{e}_i\) in the README.
+
+\paragraph{M2 and M3: Attention score.}
+The current inference path directly uses
+\begin{equation}
+    I_i=\alpha_i.
+\end{equation}
+Although the repository includes a helper that computes
+\(\alpha_i\lVert\mathbf{e}_i\rVert_2\), and the README describes this formula
+for M2, that helper is not invoked in the inference pipeline. The reported
+results must therefore be interpreted as attention weights, rather than
+attention multiplied by the embedding norm.
+
+\paragraph{M4: Pooling attention.}
+Importance is the attention weight from the learned query to the substructure:
+\begin{equation}
+    I_i=\operatorname{AvgHead}\left(a_{hi}\right).
+\end{equation}
+The implementation returns weights already averaged across heads by
+MultiheadAttention and does not retain separate attributions for individual
+heads.
+
+\paragraph{M5: masking.}
+For a trained predictor \(f\), signed importance is defined as
+\begin{equation}
+    I_i =
+    f(x)-f(x\setminus s_i)
+    =\widehat{\mathrm{pIC}}_{50}^{\,\mathrm{full}}
+    -\widehat{\mathrm{pIC}}_{50}^{\,(-i)}.
+\end{equation}
+\(I_i>0\) indicates that deleting \(s_i\) decreases the predicted pIC50, whereas
+\(I_i<0\) indicates that deleting the substructure increases the prediction.
+For atom-level visualization, the repository distributes \(I_i\) equally among
+the atoms in \(s_i\) and then sums contributions from overlapping substructures.
+
+
+\section{Results and Discussion}
+\label{sec:results}
+
+\subsection{pIC50 Prediction Performance}
+
+Table~\ref{tab:r2_results} summarizes the best test \(R^2\) values recorded in
+\texttt{grid\_results.csv} and the \texttt{training.log} files. For M1, the
+reported value corresponds to the configuration selected by cross-validation;
+for M2--M4, it corresponds to the checkpoint with the best test \(R^2\).
+
+\begin{table}[htbp]
+    \centering
+    \caption{Test \(R^2\) of the models on five datasets. Bold values indicate
+    the highest score for each dataset.}
+    \label{tab:r2_results}
+    \begin{tabular}{lrrrr}
+        \hline
+        Dataset & M1: Linear & M2: FP-Attn & M3: GNN-Attn
+                     & M4: Set Transformer \\
+        \hline
+        FAAH  & 0.414 & 0.453 & 0.097 & \textbf{0.461} \\
+        CB2   & 0.469 & \textbf{0.535} & 0.056 & 0.533 \\
+        PARP1 & $\approx 0.000$ & 0.002 & \textbf{0.005} & -0.009 \\
+        PBP2a & 0.669 & \textbf{0.850} & 0.666 & 0.408 \\
+        USP7  & \textbf{0.536} & 0.474 & 0.249 & 0.225 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+No single architecture dominates across all datasets. FP-attention performs best
+on CB2 and PBP2a and is close to the best result on FAAH. The Set Transformer
+only marginally outperforms FP-attention on FAAH (0.461 versus 0.453), while
+performing substantially worse on USP7 and PBP2a. The linear baseline remains
+the best model on USP7, indicating that greater model complexity does not
+necessarily improve performance when data are limited.
+
+GNN-attention performs markedly worse than ECFP-attention on FAAH and CB2. One
+plausible explanation is that the GNN was pretrained for QM9 property regression
+and subsequently frozen, preventing its embeddings from adapting directly to
+pIC50 or to the chemical domain of each target. These results are insufficient
+to conclude that GNNs are generally inferior to fingerprints; they demonstrate
+only that the current pretrained and frozen configuration is ineffective.
+
+All models achieve values near \(R^2=0\) on PARP1, indicating no substantial
+improvement over mean prediction on the current split. In contrast,
+FP-attention achieves 0.850 on PBP2a. However, the PBP2a test set contains only
+9 samples, so \(R^2\) has high variance and is highly sensitive to individual
+observations. Furthermore, the M1 grid contains a configuration that achieves a
+test \(R^2=0.848\), but this is not the configuration selected by CV; reporting
+that value as the primary result would introduce test-based model-selection
+bias.
+
+\subsection{Qualitative Attribution Results}
+
+The target-validation pipeline applies the models to ligands with PDB structures
+and outputs the predicted pIC50 together with the substructures having the
+largest \(|I_i|\). For example, on FAAH, the linear baseline predicts 8.22 for
+ligand 2WAP and 8.84 for 3PPM, whereas the attention predictor used for masking
+predicts 8.43 and 8.95, respectively. Under masking, one BRICS fragment of 2WAP
+has \(\Delta\mathrm{pIC}_{50}=1.31\), and one BRICS fragment of 3PPM has
+\(\Delta\mathrm{pIC}_{50}=1.68\).
+
+Substructure rankings derived from linear contributions, attention, and masking
+do not coincide completely. This is expected because the three methods answer
+different questions: contribution within the fitted linear function, the weight
+used when pooling embeddings, and the change in output following perturbation.
+The repository currently provides neither ground-truth attributions nor a
+quantitative measure of agreement among the explanation methods; the heatmaps
+should therefore be regarded only as qualitative analyses.
+
+\subsection{Experimental Limitations}
+
+The preceding results should be interpreted in light of four limitations.
+First, model checkpoints are absent from the current repository snapshot,
+although the logs and result CSV files remain; inference cannot yet be
+reproduced solely from the stored artifacts. Second, M2--M4 use the test set to
+select the best epoch, compromising the independence of the evaluation. Third,
+FAAH augmentation has been prepared, but no training results are available.
+Finally, the repository does not report MAE, RMSE, confidence intervals across
+multiple seeds, or external validation against observed pIC50 values. Future
+experiments should separate the validation set from the test set, run multiple
+seeds, preserve molecule-level splits when using randomized-SMILES augmentation,
+and evaluate attribution using both masking consistency and independent
+medicinal-chemistry knowledge.
+
+\bibliographystyle{plain}
+\bibliography{references}

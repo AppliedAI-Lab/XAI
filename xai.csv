@@ -1,0 +1,6 @@
+Target,Models with meaningful interpretation,Interpretation quality,Main observation
+PARP1,"linear, attn_pool, gnn+subattn, set_trans, mask_attn",High,Multiple models consistently identified activity-relevant pharmacophoric regions across different ligands.
+FAAH,gnn+subattn,High,Correctly highlighted reactive motifs associated with Ser241-mediated covalent inhibition.
+CB2,"attn_pool; linear, mask_linear","High: attn_pool; Moderate: linear, mask_linear","attn_pool provided the most localized identification of the central binding core, whereas linear and mask_linear produced broader attribution patterns."
+PBP2a,linear,Moderate,"Consistently identified the quinazolinone core in allosteric ligands, but failed to capture the ?-lactam pharmacophore of piperacillin."
+USP7,attn_pool,High,Consistently identified key binding motifs across the evaluated USP7 complexes.

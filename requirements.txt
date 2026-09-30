@@ -1,0 +1,7 @@
+pandas>=1.0.0
+scikit-learn>=1.0.0
+torch>=1.9.0
+rdkit>=2022.03.0
+joblib>=1.0.0
+matplotlib>=3.5.0
+scipy>=1.7.0

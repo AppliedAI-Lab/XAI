@@ -1,0 +1,10 @@
+Smiles,pIC50
+C[C@@H](O)[C@H]1C(=O)N2C(C(=O)O)=C(S[C@H]3C[C@@H](C(=O)N4CC[C@H](NC(=O)CNC(=N)N)C4)N(C)C3)[C@H](C)[C@H]12,5.006215703
+C[C@@H](O)[C@H]1C(=O)N2C(C(=O)[O-])=C(Sc3cc4ccccc4s3)[C@H](C)[C@H]12.[Na+],4.381798557
+C[C@@H](O)[C@H]1C(=O)N2C(C(=O)O)=C(c3ccc4c(c3)-c3ccc(C[N+]56CC[N+](CC(=O)Nc7ccccc7C#N)(CC5)CC6)cc3C4=O)[C@H](C)[C@H]12.[Cl-].[Cl-],5.958155838
+COc1cccc(NC(=O)C[N+]23CC[N+](Cc4ccc5c(c4)C(=O)c4ccc(C6=C(C(=O)O)N7C(=O)[C@H]([C@@H](C)O)[C@H]7[C@H]6C)cc4-5)(CC2)CC3)c1.[Cl-].[Cl-],5.61481033
+C[C@@H](O)[C@H]1C(=O)N2C(C(=O)O)=C(c3ccc4c(c3)-c3ccc(C[N+]56CC[N+](CC(=O)NC7CCCC7)(CC5)CC6)cc3C4=O)[C@H](C)[C@H]12.[Cl-].[Cl-],5.852290864
+C[C@@H](O)[C@H]1C(=O)N2C(C(=O)O)=C(c3ccc4c(c3)-c3ccc(C[N+]56CC[N+](CC(=O)Nc7cccc(CO)c7)(CC5)CC6)cc3C4=O)[C@H](C)[C@H]12.[Cl-].[Cl-],5.795700472
+CCO/N=C(\C(=O)N[C@@H]1C(=O)N2C(C(=O)[O-])=C(Sc3nc(-c4cc[n+](C)cc4)cs3)CS[C@H]12)c1nsc(N)n1,6.57743435
+Nc1nc(/C(=N/O)C(=O)N[C@@H]2C(=O)N3C(C(=O)O)=C(/C=C4\CCN([C@@H]5CCNC5)C4=O)CS[C@H]23)ns1,5.773770197
+C[C@@H](O)[C@H]1C(=O)N2C(C(=O)O)=C(c3ccc4c(c3)-c3ccc(C[N+]56CC[N+](CC(=O)c7ccccc7)(CC5)CC6)cc3C4=O)[C@H](C)[C@H]12.[Cl-].[Cl-],6.055581767

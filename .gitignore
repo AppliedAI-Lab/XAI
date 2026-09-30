@@ -1,0 +1,77 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+pip-wheel-metadata/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model weights & checkpoints
+weights/
+*.pt
+*.pth
+*.ckpt
+*.pkl
+*.joblib
+checkpoints/
+
+# Experiment outputs & logs
+outputs/
+logs/
+*.log
+
+# Local / env secrets
+.env
+.env.*
+*.pem
+
+# Misc generated
+*.tmp
+*.temp
+
+# Vendored third-party bulk (keep source only)
+src/models/ReLeaSE/checkpoints/
+src/models/ReLeaSE/data/
+src/models/ReLeaSE/OpenChem/
+src/models/molecularGNN_3Dstructure/dataset/
+
+# Nested git metadata (disabled)
+**/.git.bak/
